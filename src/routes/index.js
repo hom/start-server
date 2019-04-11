@@ -67,4 +67,22 @@ router.get('/api/card/:objectId', async (req, res, next) => {
   });
 })
 
+
+router.post('/api/card', async (req, res, next) => {
+  let body = { ...req.body };
+
+  let result;
+  try {
+    result = await (new Parse.Object('Card')).save(body);
+  } catch (error) {
+    return res.status(500).json({
+      error: '保存Card出错啦',
+    });
+  }
+
+  return res.status(200).json({
+    data: result.toJSON(),
+  });
+});
+
 module.exports = router;
