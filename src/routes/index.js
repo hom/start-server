@@ -30,8 +30,6 @@ router.get('/api/cards', async (req, res, next) => {
     });
   }
 
-  console.log(results);
-
   res.status(200).json({
     data: results,
   });
