@@ -85,4 +85,21 @@ router.post('/api/card', async (req, res, next) => {
   });
 });
 
+router.post('/api/mark', async (req, res, next) => {
+  let body = { ...req.body };
+
+  let result;
+  try {
+    result = await (new Parse.Object('Mark')).save(body);
+  } catch (error) {
+    return res.status(500).json({
+      error: '保存Mark出错啦',
+    });
+  }
+
+  return res.status(200).json({
+    data: result.toJSON(),
+  });
+})
+
 module.exports = router;
