@@ -1,5 +1,8 @@
+const got = require('got');
 const router = require('express').Router();
 const Parse = require('../Parse');
+const upyun = require('../Upyun');
+const fs = require('fs');
 
 async function findMark(card) {
 
@@ -84,11 +87,57 @@ router.post('/api/card', async (req, res, next) => {
 });
 
 router.post('/api/mark', async (req, res, next) => {
-  let body = { ...req.body };
+  const { url, title, name, target, card } = { ...req.body };
+
+  let filePath = process.env.UPYUN_DIRECTORY_NAME + name;
+  if (url) {
+    let date = new Date().toGMTString();
+    let sign = upyun.sign('PUT', '/'+ process.env.UPYUN_BUCKET_NAME + filePath, date);
+    let upyunURL = process.env.UPYUN_SERVER_URL + '/'+ process.env.UPYUN_BUCKET_NAME + filePath;
+    try {
+      let promise = new Promise((resolve, reject) => {
+        got.stream(url, {
+          headers: {
+            'Content-Type': 'image/png'
+          }
+        })
+        .on('error', (error) => {
+          console.error(error);
+          reject(error);
+        })
+        .pipe(got.stream.put(upyunURL, {
+          headers: {
+            Authorization: sign,
+            Date: date,
+            'Content-Type': 'image/png',
+          },
+          stream: true,
+        }).on('response', (response) => {
+          resolve(response);
+        }).on('error', (error) => {
+          console.error(error);
+          reject(error);
+        }))
+      })
+      await promise;
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        error: '上传图片失败',
+      });
+    }
+  }
+
+  let mark = {
+    title,
+    target,
+    card,
+    favicon: process.env.CDN_URL + filePath,
+  }
 
   let result;
   try {
-    result = await (new Parse.Object('Mark')).save(body);
+    result = await (new Parse.Object('Mark')).save(mark);
   } catch (error) {
     return res.status(500).json({
       error: '保存Mark出错啦',
