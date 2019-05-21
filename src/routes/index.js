@@ -13,7 +13,17 @@ router.get('/api/cards', async (req, res, next) => {
   
   let results = [];
   try {
-    await (new Parse.Query('Card')).each(async (card) => {
+    results = await (new Parse.Query('Card')).ascending('sort').find();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: '服务器出错啦',
+    });
+  }
+
+  let cards = [];
+  try {
+    for await(let card of results) {
       let marks;
       try {
         marks = await (new Parse.Query('Mark')).equalTo('card', card).find();
@@ -24,17 +34,16 @@ router.get('/api/cards', async (req, res, next) => {
 
       let cardObject = { ...card.toJSON() };
       cardObject['marks'] = marks.map((item) => item.toJSON());
-      return results.push(cardObject);
-    });
+      cards.push(cardObject);
+    }
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
-      error: '服务器出错啦',
+      error: '查询mark出错了',
     });
   }
 
   res.status(200).json({
-    data: results,
+    data: cards,
   });
 })
 
