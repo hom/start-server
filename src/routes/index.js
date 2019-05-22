@@ -81,9 +81,21 @@ router.get('/api/card/:objectId', async (req, res, next) => {
 router.post('/api/card', async (req, res, next) => {
   let body = { ...req.body };
 
+  
+  let count = 0;
+  try {
+    count = await (new Parse.Query('Card')).count();
+  } catch (error) {
+    return res.status(500).json({
+      error: '出错了',
+    });
+  }
+  
+  let card = new Parse.Object('Card');
+  card.set('sort', count);
   let result;
   try {
-    result = await (new Parse.Object('Card')).save(body);
+    result = await card.save(body);
   } catch (error) {
     return res.status(500).json({
       error: '保存Card出错啦',
