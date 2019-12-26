@@ -26,7 +26,7 @@ router.get('/api/cards', async (req, res, next) => {
     for await(let card of results) {
       let marks;
       try {
-        marks = await (new Parse.Query('Mark')).equalTo('card', card).find();
+        marks = await (new Parse.Query('Mark')).equalTo('card', card).equalTo('hidden', false).find();
       } catch (error) {
         console.error(error);
         throw new Error('查询出错了');
